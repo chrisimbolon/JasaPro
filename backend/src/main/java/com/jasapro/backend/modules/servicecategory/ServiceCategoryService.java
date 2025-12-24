@@ -16,32 +16,27 @@ public class ServiceCategoryService {
 
     private final ServiceCategoryRepository repository;
 
-    // Constructor injection
     public ServiceCategoryService(ServiceCategoryRepository repository) {
         this.repository = repository;
     }
 
     /**
      * Create a new service category
-     * 
-     * @param request: CategoryRequest with name, description, iconUrl
-     * @return: CategoryResponse with created category data
-     * @throws BadRequestException if category name already exists
      */
     @Transactional
     public CategoryResponse createCategory(CategoryRequest request) {
         // Check if category with same name already exists
-        if (repository.findByName(request.name).isPresent()) {
-            throw new BadRequestException("Category already exists: " + request.name);
+        if (repository.findByName(request.getName()).isPresent()) {
+            throw new BadRequestException("Category already exists: " + request.getName());
         }
 
         // Create new ServiceCategory entity
         ServiceCategory category = new ServiceCategory(
-                request.name,
-                request.description,
-                request.iconUrl);
+                request.getName(),
+                request.getDescription(),
+                request.getIconUrl());
 
-        // Save to database (Hibernate handles INSERT)
+        // Save to database
         ServiceCategory saved = repository.save(category);
 
         // Convert entity to DTO and return
@@ -50,8 +45,6 @@ public class ServiceCategoryService {
 
     /**
      * Get all active categories
-     * 
-     * @return: List of CategoryResponse DTOs
      */
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAllCategories() {
@@ -63,37 +56,24 @@ public class ServiceCategoryService {
 
     /**
      * Get a single category by ID
-     * 
-     * @param id: Category ID
-     * @return: CategoryResponse
-     * @throws ResourceNotFoundException if category not found
      */
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long id) {
-        ServiceCategory category = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
+        ServiceCategory category = findCategoryById(id);
         return mapToResponse(category);
     }
 
     /**
      * Update an existing category
-     * 
-     * @param id:      Category ID to update
-     * @param request: Updated category data
-     * @return: Updated CategoryResponse
-     * @throws ResourceNotFoundException if category not found
      */
     @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
-        ServiceCategory category = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
+        ServiceCategory category = findCategoryById(id);
 
-        // Update fields
-        category.setName(request.name);
-        category.setDescription(request.description);
-        category.setIconUrl(request.iconUrl);
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
+        category.setIconUrl(request.getIconUrl());
 
-        // Save changes (Hibernate handles UPDATE + @PreUpdate fires)
         ServiceCategory updated = repository.save(category);
 
         return mapToResponse(updated);
@@ -101,35 +81,34 @@ public class ServiceCategoryService {
 
     /**
      * Delete a category (soft delete)
-     * Sets isActive to false instead of removing from database
-     * 
-     * @param id: Category ID to delete
-     * @throws ResourceNotFoundException if category not found
      */
     @Transactional
     public void deleteCategory(Long id) {
-        ServiceCategory category = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
-
-        // Soft delete: mark as inactive
+        ServiceCategory category = findCategoryById(id);
         category.setIsActive(false);
-
-        // Save the change
         repository.save(category);
     }
 
     /**
+     * Common helper to load category or throw
+     */
+    private ServiceCategory findCategoryById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id));
+    }
+
+    /**
      * Map ServiceCategory entity to CategoryResponse DTO
-     * Private utility method
      */
     private CategoryResponse mapToResponse(ServiceCategory category) {
         CategoryResponse response = new CategoryResponse();
-        response.id = category.getId();
-        response.name = category.getName();
-        response.description = category.getDescription();
-        response.iconUrl = category.getIconUrl();
-        response.isActive = category.getIsActive();
-        response.createdAt = category.getCreatedAt();
+        response.setId(category.getId());
+        response.setName(category.getName());
+        response.setDescription(category.getDescription());
+        response.setIconUrl(category.getIconUrl());
+        response.setIsActive(category.getIsActive());
+        response.setCreatedAt(category.getCreatedAt());
+        response.setUpdatedAt(category.getUpdatedAt()); // if your entity has it
         return response;
     }
 }
