@@ -16,7 +16,7 @@ import com.jasapro.backend.modules.servicecategory.dto.CategoryRequest;
 import com.jasapro.backend.modules.servicecategory.dto.CategoryResponse;
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/categories")
 public class ServiceCategoryController {
 
     private final ServiceCategoryService service;
