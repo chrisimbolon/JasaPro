@@ -11,16 +11,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // ✅ Fixed: use lambda
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/users/**").permitAll()
-                        .anyRequest().authenticated())
-                .httpBasic(basic -> {
-                }); // ✅ Fixed: use lambda
-
+                        .requestMatchers("/api/**").permitAll() // Allow all /api endpoints
+                        .anyRequest().permitAll());
         return http.build();
     }
 }
